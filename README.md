@@ -1,6 +1,6 @@
 # Agent Workstation Suite
 
-Local-first agent workstation plus a linked image generation workbench.
+Leslie 的 AI Agent 工作站套件：本地优先的 Agent 工作站，加一个独立的图像生成工作台。
 
 ## Projects
 
