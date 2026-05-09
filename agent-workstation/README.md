@@ -20,6 +20,19 @@ Open:
 http://127.0.0.1:4789
 ```
 
+## Desktop App
+
+Build the shareable Windows app:
+
+```powershell
+.\desktop-build\build-agent-workstation.ps1
+```
+
+Output:
+
+- `dist\AgentWorkstation\AgentWorkstation.exe`
+- `release\AgentWorkstation-Setup.zip`
+
 ## What It Manages
 
 - Hub root: `%USERPROFILE%\.agent-workstation`

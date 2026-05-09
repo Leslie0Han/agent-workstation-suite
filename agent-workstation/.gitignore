@@ -2,6 +2,12 @@
 .claude/
 backup_*/
 
+# Packaged builds and installers
+dist/
+release/
+desktop-build/bin/
+desktop-build/packages/
+
 # Screenshots and generated previews
 *.png
 

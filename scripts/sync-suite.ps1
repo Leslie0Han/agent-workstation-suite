@@ -40,7 +40,9 @@ $AgentFiles = @(
   "index.html",
   "server.mjs",
   "styles.css",
-  "workstation.js"
+  "workstation.js",
+  "desktop-build\AgentWorkstationLauncher.cs",
+  "desktop-build\build-agent-workstation.ps1"
 )
 
 $ImageFiles = @(

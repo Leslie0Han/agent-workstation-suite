@@ -22,6 +22,15 @@ Open:
 http://127.0.0.1:4789
 ```
 
+Desktop package:
+
+```powershell
+cd agent-workstation
+.\desktop-build\build-agent-workstation.ps1
+```
+
+The packaged app is written to `agent-workstation\release\AgentWorkstation-Setup.zip`.
+
 Image Workbench:
 
 ```powershell
