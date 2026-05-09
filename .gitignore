@@ -1,0 +1,33 @@
+# Local runtime data
+**/data/
+**/outputs/
+**/backups/
+**/backup_*/
+**/.claude/
+
+# Packaged builds and installers
+**/dist/
+**/release/
+**/desktop-build/bin/
+**/desktop-build/packages/
+
+# Generated screenshots/previews
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Logs, archives, and temp files
+*.log
+*.tmp
+*.bak
+*.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/

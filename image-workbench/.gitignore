@@ -1,0 +1,31 @@
+# Local runtime data
+data/
+outputs/
+backups/
+
+# Packaged builds and installers
+dist/
+release/
+desktop-build/packages/
+desktop-build/bin/
+
+# Generated previews and screenshots
+*-workbench.png
+neuro-lighttrail-workbench.png
+neurosync-refined-workbench.png
+reference-upload-compact.png
+restored-original-ui.png
+ui-border-icon-redesign.png
+window-border-softened.png
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.zip
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

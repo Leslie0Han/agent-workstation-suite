@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>图像生成工作台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="studio-shell">
+    <aside class="control-rail">
+      <header class="rail-header">
+        <div>
+          <p class="overline">Image Console</p>
+          <h1>图像生成工作台</h1>
+        </div>
+        <span class="live-chip" id="statusPill">就绪</span>
+      </header>
+
+      <form id="configForm" class="config-stack">
+        <section class="control-section connection-section compact-connection">
+          <div class="section-heading">
+            <span>接口</span>
+            <button type="button" class="secondary-button" id="openSettingsBtn">设置</button>
+          </div>
+          <p class="active-api" id="activeApiLabel">GPT 官方 · gpt-image-2</p>
+        </section>
+
+        <section class="control-section">
+          <div class="section-heading">
+            <span>生成</span>
+          </div>
+          <div class="segmented-grid">
+            <label class="field">
+              <span>画面比例</span>
+              <select id="aspectSelect">
+                <option value="auto" selected>自动比例</option>
+                <option value="1:1">1:1 方图</option>
+                <option value="4:3">4:3 横图</option>
+                <option value="3:4">3:4 竖图</option>
+                <option value="16:9">16:9 宽屏</option>
+                <option value="21:9">21:9 超宽屏</option>
+                <option value="3:2">3:2 横构图</option>
+                <option value="2:3">2:3 竖构图</option>
+                <option value="9:16">9:16 手机</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>分辨率</span>
+              <select id="resolutionSelect">
+                <option value="1024">1K</option>
+                <option value="2048">2K</option>
+                <option value="4096">4K</option>
+              </select>
+            </label>
+          </div>
+          <label class="field compact-field">
+            <span>生图数量</span>
+            <input id="countInput" type="number" min="1" max="12" value="1">
+          </label>
+        </section>
+
+        <section class="control-section">
+          <div class="section-heading">
+            <span>参考图片</span>
+            <button type="button" class="ghost-button" id="clearUploadsBtn">清空</button>
+          </div>
+          <label class="upload-zone" id="uploadZone">
+            <input id="imageInput" type="file" accept="image/*" multiple>
+            <span class="upload-mark">+</span>
+            <strong>拖放或点击上传</strong>
+            <small>可上传一张或多张，按顺序记录为图片1、图片2...</small>
+          </label>
+          <div class="upload-list" id="uploadList"></div>
+        </section>
+
+        <section class="control-section prompt-card">
+          <label class="field prompt-field">
+            <span>提示词</span>
+            <textarea id="promptInput" rows="8" placeholder="描述主体、场景、镜头、风格、光线和构图..."></textarea>
+          </label>
+          <label class="toggle-row">
+            <input id="optimizePromptInput" type="checkbox" checked>
+            <span>提示词优化</span>
+          </label>
+          <div class="action-row">
+            <button type="button" class="secondary-button" id="optimizeBtn">优化</button>
+            <button type="submit" class="primary-button" id="generateBtn">生成图片</button>
+          </div>
+        </section>
+      </form>
+    </aside>
+
+    <section class="workspace">
+      <header class="workspace-header">
+        <div>
+          <p class="overline">Gallery</p>
+          <h2>生成结果</h2>
+          <span id="galleryMeta">0 张图片</span>
+        </div>
+        <div class="tool-strip">
+          <button type="button" id="maintenanceBtn" class="tool-button" title="更新与维护">更新</button>
+          <button type="button" id="pasteBtn" class="tool-button" title="粘贴">粘贴</button>
+          <button type="button" id="downloadSelectedBtn" class="tool-button" title="批量下载">下载</button>
+          <button type="button" id="zipSelectedBtn" class="tool-button emphasis" title="导出压缩包">ZIP</button>
+        </div>
+      </header>
+
+      <div class="gallery-surface" id="galleryCanvas">
+        <div class="empty-state" id="emptyState">
+          <p class="overline">Ready</p>
+          <h3>等待第一张图片</h3>
+          <p>生成后的缩略图会排布在这里。可点击预览、框选多张，并通过右键菜单批量处理。</p>
+        </div>
+        <div class="generation-overlay" id="generationOverlay" aria-hidden="true">
+          <div class="generation-panel">
+            <div class="generation-orbit">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div>
+              <p class="overline">Generating</p>
+              <h3 id="generationTitle">正在生成图片</h3>
+              <p id="generationText">正在连接模型接口，请稍候。</p>
+            </div>
+            <div class="generation-bar">
+              <i></i>
+            </div>
+          </div>
+        </div>
+        <div class="thumb-grid" id="thumbGrid"></div>
+        <div class="selection-box" id="selectionBox"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="context-menu" id="contextMenu">
+    <button data-action="preview">预览</button>
+    <button data-action="edit">编辑</button>
+    <button data-action="delete">删除</button>
+    <button data-action="regenerate">重新生成</button>
+    <button data-action="rename">重命名</button>
+    <button data-action="copy">复制</button>
+    <button data-action="cut">剪切</button>
+    <button data-action="stack">叠放选中图片</button>
+    <button data-action="unstack">取消叠放</button>
+    <button data-action="zip">导出压缩包</button>
+    <button data-action="download">批量下载</button>
+  </nav>
+
+  <dialog id="previewDialog" class="preview-dialog">
+    <button class="dialog-close" id="closePreviewBtn" type="button">关闭</button>
+    <button class="preview-nav preview-prev" id="previewPrevBtn" type="button">上一张</button>
+    <img id="previewImage" alt="预览图片">
+    <button class="preview-nav preview-next" id="previewNextBtn" type="button">下一张</button>
+    <div class="preview-info">
+      <strong id="previewName"></strong>
+      <span id="previewDetails"></span>
+    </div>
+  </dialog>
+
+  <dialog id="stackDialog" class="stack-dialog">
+    <button class="dialog-close" id="closeStackBtn" type="button">关闭</button>
+    <header class="stack-header">
+      <div>
+        <p class="overline">Stack</p>
+        <h3 id="stackTitle">叠放图片</h3>
+        <span id="stackMeta"></span>
+      </div>
+    </header>
+    <div class="stack-grid" id="stackGrid"></div>
+  </dialog>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <button class="dialog-close" id="closeSettingsBtn" type="button">关闭</button>
+    <header class="settings-header">
+      <div>
+        <p class="overline">API Settings</p>
+        <h3>接口设置</h3>
+        <span>管理多个 GPT / Gemini 官方或第三方接口，并选择当前生成接口。</span>
+      </div>
+    </header>
+    <div class="settings-layout">
+      <aside class="profile-list-panel">
+        <div class="settings-actions">
+          <button type="button" class="secondary-button" id="newProfileBtn">新增</button>
+          <button type="button" class="secondary-button" id="deleteProfileBtn">删除</button>
+        </div>
+        <div class="profile-list" id="profileList"></div>
+      </aside>
+      <section class="profile-editor">
+        <div class="segmented-grid">
+          <label class="field">
+            <span>分类</span>
+            <select id="apiCategorySelect">
+              <option value="gpt">GPT</option>
+              <option value="gemini">Gemini</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>来源</span>
+            <select id="apiProviderSelect">
+              <option value="official">官方接口</option>
+              <option value="third-party">第三方接口</option>
+            </select>
+          </label>
+        </div>
+        <label class="field">
+          <span>配置名称</span>
+          <input id="apiNameInput" type="text" placeholder="例如 GPT 官方">
+        </label>
+        <label class="field">
+          <span>API Key</span>
+          <input id="apiKeyInput" type="password" autocomplete="off" placeholder="sk-...">
+        </label>
+        <label class="field">
+          <span>模型名称</span>
+          <input id="apiModelInput" type="text" value="gpt-image-2" placeholder="gpt-image-2">
+        </label>
+        <label class="field">
+          <span>请求地址</span>
+          <input id="apiEndpointInput" type="url" value="https://api.openai.com/v1/images/generations" placeholder="https://api.openai.com/v1/images/generations">
+        </label>
+        <label class="field">
+          <span>请求格式</span>
+          <select id="apiFormatSelect">
+            <option value="images">Images API：model + prompt</option>
+            <option value="chat">Chat Completions：messages</option>
+          </select>
+        </label>
+        <div class="action-row">
+          <button type="button" class="secondary-button" id="applyProfileBtn">设为当前</button>
+          <button type="button" class="primary-button" id="saveApiBtn">保存配置</button>
+        </div>
+      </section>
+    </div>
+  </dialog>
+
+  <dialog id="maintenanceDialog" class="settings-dialog">
+    <button class="dialog-close" id="closeMaintenanceBtn" type="button">关闭</button>
+    <header class="settings-header">
+      <div>
+        <p class="overline">Maintenance</p>
+        <h3>更新与维护</h3>
+        <span>更新程序前先备份数据。更新时只替换程序文件，保留 data 和 outputs。</span>
+      </div>
+    </header>
+    <div class="maintenance-grid">
+      <button type="button" class="maintenance-action" id="openAppDirBtn">
+        <strong>打开程序目录</strong>
+        <span>查看 EXE、前端文件、服务端文件和运行时。</span>
+      </button>
+      <button type="button" class="maintenance-action" id="openDataDirBtn">
+        <strong>打开数据目录</strong>
+        <span>接口配置、WebView2 本地数据、生成记录。</span>
+      </button>
+      <button type="button" class="maintenance-action" id="openOutputsDirBtn">
+        <strong>打开输出目录</strong>
+        <span>查看保存下来的生成图片。</span>
+      </button>
+      <button type="button" class="maintenance-action" id="backupDataBtn">
+        <strong>备份数据</strong>
+        <span>把 data 和 outputs 复制到 backups。</span>
+      </button>
+    </div>
+    <section class="update-notes">
+      <h4>以后更新怎么操作</h4>
+      <p>1. 在旧版本里点击“备份数据”。</p>
+      <p>2. 关闭程序。</p>
+      <p>3. 用新版本文件覆盖旧目录里的程序文件。</p>
+      <p>4. 不要删除 <code>data</code>、<code>outputs</code>、<code>runtime</code>，再启动 EXE。</p>
+    </section>
+  </dialog>
+
+  <dialog id="editDialog" class="edit-dialog">
+    <form method="dialog" class="edit-card" id="editForm">
+      <h3>编辑图片信息</h3>
+      <label class="field">
+        <span>名称</span>
+        <input id="editNameInput" type="text">
+      </label>
+      <label class="field">
+        <span>提示词</span>
+        <textarea id="editPromptInput" rows="5"></textarea>
+      </label>
+      <div class="action-row">
+        <button type="button" class="secondary-button" id="cancelEditBtn">取消</button>
+        <button type="submit" class="primary-button">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
