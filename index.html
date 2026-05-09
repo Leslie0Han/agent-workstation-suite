@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent 工作站</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="workstation-shell">
+    <aside class="side-rail">
+      <header class="brand-block">
+        <span class="brand-mark">AW</span>
+        <div>
+          <p class="eyebrow" data-i18n="localHub">本地中枢</p>
+          <h1>Agent Workstation</h1>
+        </div>
+      </header>
+
+      <nav class="rail-nav" aria-label="Workspace sections">
+        <button class="nav-item active" data-view="overview" type="button" data-i18n="navOverview">总览</button>
+        <button class="nav-item" data-view="sync" type="button" data-i18n="navSync">Agent 同步</button>
+        <button class="nav-item" data-view="aihot" type="button" data-i18n="navAihot">AI 热点</button>
+        <button class="nav-item" data-view="skills" type="button">Skills</button>
+        <button class="nav-item" data-view="memory" type="button" data-i18n="navMemory">记忆库</button>
+        <button class="nav-item" data-view="projects" type="button" data-i18n="navProjects">项目库</button>
+        <button class="nav-item" data-view="apps" type="button" data-i18n="navApps">应用</button>
+      </nav>
+
+      <section class="rail-panel">
+        <p class="panel-label" data-i18n="hubRoot">中枢目录</p>
+        <code id="hubPath">Loading...</code>
+        <button class="plain-action" data-open="hub" type="button" data-i18n="openFolder">打开目录</button>
+      </section>
+    </aside>
+
+    <section class="main-stage">
+      <header class="top-bar">
+        <div>
+          <p class="eyebrow" data-i18n="tagline">跨 Agent 共享上下文工作台</p>
+          <h2 id="viewTitle">总览</h2>
+        </div>
+        <div class="top-actions">
+          <span class="status-pill" id="statusPill">扫描中</span>
+          <button class="secondary-button language-toggle" id="languageToggle" type="button">EN</button>
+          <button class="secondary-button" id="refreshBtn" type="button" data-i18n="refresh">刷新</button>
+        </div>
+      </header>
+
+      <section class="view active" id="overviewView">
+        <section class="dashboard-connection-panel">
+          <div class="dashboard-section-head">
+            <div>
+              <h3 data-i18n="connectionMethods">Connection methods</h3>
+              <p data-i18n="connectionHint">Green means this account already has that connection type.</p>
+            </div>
+            <button class="dashboard-link-button" data-view-jump="sync" type="button" data-i18n="manageConnections">Manage connections</button>
+          </div>
+          <div class="connection-method-grid" id="connectionMethodGrid"></div>
+        </section>
+
+        <div class="dashboard-stat-grid">
+          <article class="dashboard-stat-card active">
+            <span data-i18n="statAll">All</span>
+            <strong id="dashboardAllCount">0</strong>
+          </article>
+          <article class="dashboard-stat-card">
+            <span>Skills</span>
+            <strong id="hubSkillCount">0</strong>
+          </article>
+          <article class="dashboard-stat-card">
+            <span>Memory</span>
+            <strong id="memoryCount">0</strong>
+          </article>
+          <article class="dashboard-stat-card">
+            <span data-i18n="projects">Projects</span>
+            <strong id="dashboardProjectCount">0</strong>
+          </article>
+          <article class="dashboard-stat-card">
+            <span data-i18n="connections">Connections</span>
+            <strong id="dashboardConnectionCount">0</strong>
+          </article>
+        </div>
+
+        <section class="dashboard-main-grid">
+          <section class="dashboard-files-panel">
+            <div class="dashboard-section-head">
+              <div>
+                <h3 data-i18n="files">Files</h3>
+                <p id="dashboardPathLabel">Root</p>
+              </div>
+              <div class="dashboard-actions">
+                <button class="secondary-button" data-view-jump="memory" type="button" data-i18n="editMemory">Edit memory</button>
+                <button class="secondary-button" data-view-jump="sync" type="button" data-i18n="exportAll">Export all</button>
+              </div>
+            </div>
+            <div class="dashboard-filter-row">
+              <input id="dashboardSearch" type="search" data-i18n-placeholder="searchFiles" placeholder="Search files">
+              <select id="dashboardTypeFilter" aria-label="Type filter">
+                <option value="all">Type: All</option>
+                <option value="folder">Type: Folder</option>
+                <option value="file">Type: File</option>
+              </select>
+              <select id="dashboardSourceFilter" aria-label="Source filter">
+                <option value="all">Source: All</option>
+                <option value="hub">Source: Hub</option>
+                <option value="agent">Source: Agent</option>
+                <option value="system">Source: System</option>
+              </select>
+            </div>
+            <div class="dashboard-file-list" id="dashboardFileList"></div>
+          </section>
+
+          <aside class="dashboard-summary-panel">
+            <h3 data-i18n="summary">Summary</h3>
+            <div class="dashboard-summary-list" id="dashboardSummaryList"></div>
+          </aside>
+        </section>
+
+        <div class="legacy-overview-data" aria-hidden="true">
+          <strong id="claudeSkillCount">0</strong>
+          <strong id="codexSkillCount">0</strong>
+          <span id="coverageMeta">0 tracked</span>
+          <div id="coverageList"></div>
+          <span id="imageAppStatus"></span>
+          <code id="imagePath">Loading...</code>
+          <button id="launchImageBtn" type="button"></button>
+        </div>
+      </section>
+
+      <section class="view" id="syncView">
+        <section class="surface-block adapter-overview">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="adapterEyebrow">Adapters</p>
+              <h3 data-i18n="adapterTitle">Agent 接入状态</h3>
+              <p class="quiet-copy" data-i18n="adapterCopy">以 Hub 为真源，看每个 Agent 已读到哪些共享层。</p>
+            </div>
+            <div class="adapter-actions">
+              <span id="adapterMeta">-</span>
+              <button class="secondary-button" id="reloadAdaptersBtn" type="button" data-i18n="refreshAdapters">刷新接入</button>
+            </div>
+          </div>
+          <div class="adapter-grid" id="adapterGrid"></div>
+        </section>
+
+        <section class="surface-block">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="previewFirst">先预览</p>
+              <h3 data-i18n="syncConsoleTitle">同步控制台</h3>
+            </div>
+          </div>
+          <p class="quiet-copy" data-i18n="syncConsoleCopy">选择一个方向，工作站会生成一份可执行计划。默认只选新增项；已有差异需要你手动勾选。</p>
+
+          <div class="direction-grid" id="syncDirections">
+            <button class="direction-card active" data-direction="toHub" type="button">
+              <strong data-i18n="directionToHub">汇总到 Hub</strong>
+              <span data-i18n="directionToHubCopy">从 Claude / Codex 收集 Skills，放进统一中枢。</span>
+            </button>
+            <button class="direction-card" data-direction="fromHub" type="button">
+              <strong data-i18n="directionFromHub">分发到 Agent</strong>
+              <span data-i18n="directionFromHubCopy">从 Hub 分发到 Claude / Codex。</span>
+            </button>
+          </div>
+
+          <div class="plan-toolbar">
+            <div>
+              <p class="panel-label" data-i18n="currentDirection">当前方向</p>
+              <strong id="syncDirectionLabel">汇总到 Hub</strong>
+            </div>
+            <div class="sync-actions">
+              <button class="secondary-button" id="selectAllBtn" type="button" data-i18n="selectAll">全选</button>
+              <button class="secondary-button" id="clearSelectionBtn" type="button" data-i18n="selectNone">全不选</button>
+              <button class="primary-button" id="runSyncBtn" type="button" data-i18n="runSync">执行同步</button>
+            </div>
+          </div>
+
+          <div class="plan-summary" id="planSummary"></div>
+          <div class="sync-table" id="syncTable"></div>
+          <div class="sync-result" id="syncResult"></div>
+        </section>
+
+        <section class="surface-block sync-notes">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="rules">规则</p>
+              <h3 data-i18n="safeWriteRules">安全写入原则</h3>
+            </div>
+          </div>
+          <div class="sync-steps">
+            <article>
+              <strong data-i18n="syncStep1Title">1. 以中枢为真源</strong>
+              <span data-i18n="syncStep1Body">把稳定偏好、记忆、Skills 和项目笔记统一放在工作站中枢里。</span>
+            </article>
+            <article>
+              <strong data-i18n="syncStep2Title">2. 通过适配器导出</strong>
+              <span data-i18n="syncStep2Body">把选中的 Skills 和指令按 Claude / Codex 的目录约定导出。</span>
+            </article>
+            <article>
+              <strong data-i18n="syncStep3Title">3. 写入前先看差异</strong>
+              <span data-i18n="syncStep3Body">所有写入都先展示预览，默认 merge；mirror 必须是明确操作。</span>
+            </article>
+          </div>
+        </section>
+
+      </section>
+
+      <section class="view" id="skillsView">
+        <section class="surface-block">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="registry">注册表</p>
+              <h3 data-i18n="installedSkills">已安装 Skills</h3>
+            </div>
+            <div class="mini-tabs" role="tablist">
+              <button class="mini-tab active" data-skill-source="claude" type="button">Claude</button>
+              <button class="mini-tab" data-skill-source="codex" type="button">Codex</button>
+              <button class="mini-tab" data-skill-source="hub" type="button">Hub</button>
+            </div>
+          </div>
+          <div class="skill-list" id="skillList"></div>
+        </section>
+      </section>
+
+      <section class="view" id="memoryView">
+        <section class="surface-block memory-workbench">
+          <div class="block-heading">
+            <div>
+            <p class="eyebrow">Memory</p>
+            <h3 data-i18n="memoryLayers">共享上下文层</h3>
+            <p class="quiet-copy" data-i18n="memoryCopy">Profile 放稳定偏好，Memory 放长期事实，项目笔记放本项目决策。</p>
+            </div>
+            <button class="secondary-button" id="reloadMemoryBtn" type="button" data-i18n="reloadMemory">重新读取</button>
+          </div>
+
+          <div class="memory-layout">
+            <div class="memory-tabs" id="memoryTabs"></div>
+            <div class="memory-editor">
+              <div class="memory-editor-head">
+                <div>
+                  <strong id="memoryTitle">Profile</strong>
+                  <span id="memoryMeta">Loading...</span>
+                </div>
+                <button class="primary-button" id="saveMemoryBtn" type="button" data-i18n="saveMemory">保存</button>
+              </div>
+              <textarea id="memoryEditor" spellcheck="false"></textarea>
+              <div class="inbox-composer">
+                <input id="inboxInput" type="text" data-i18n-placeholder="inboxPlaceholder" placeholder="写一条临时消息，追加到 Inbox">
+                <button class="secondary-button" id="appendInboxBtn" type="button" data-i18n="appendInbox">追加</button>
+              </div>
+              <p class="sync-result" id="memoryResult"></p>
+            </div>
+          </div>
+        </section>
+
+        <section class="surface-block memory-import">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="memoryImportEyebrow">提炼</p>
+              <h3 data-i18n="memoryImportTitle">从现有 Agent 提取记忆</h3>
+              <p class="quiet-copy" data-i18n="memoryImportCopy">只生成候选摘要，不会自动导入历史会话。勾选后才写入 Hub。</p>
+            </div>
+            <div class="memory-import-actions">
+              <span id="memoryImportMeta">-</span>
+              <button class="secondary-button" id="scanMemoryImportBtn" type="button" data-i18n="scanMemory">扫描候选</button>
+            </div>
+          </div>
+          <div class="memory-import-list" id="memoryImportList"></div>
+          <div class="context-actions">
+            <button class="primary-button" id="importMemoryBtn" type="button" data-i18n="importSelectedMemory">导入选中记忆</button>
+            <p class="sync-result" id="memoryImportResult"></p>
+          </div>
+        </section>
+
+        <section class="surface-block context-export">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="contextExportEyebrow">分发</p>
+              <h3 data-i18n="contextExportTitle">把 Hub 内容写给 Agent</h3>
+              <p class="quiet-copy" data-i18n="contextExportCopy">只更新 AGENT-WORKSTATION 托管区块，不覆盖区块外的原有内容。</p>
+            </div>
+            <button class="secondary-button" id="reloadContextPreviewBtn" type="button" data-i18n="reloadPreview">刷新预览</button>
+          </div>
+          <div class="context-export-grid">
+            <div class="context-targets" id="contextTargets"></div>
+            <pre id="contextPreview">Loading...</pre>
+          </div>
+          <div class="context-actions">
+            <button class="primary-button" id="exportContextBtn" type="button" data-i18n="exportContext">分发给选中 Agent</button>
+            <p class="sync-result" id="contextResult"></p>
+          </div>
+        </section>
+
+        <section class="surface-block hub-index">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="hubIndexEyebrow">Hub Index</p>
+              <h3 data-i18n="hubIndexTitle">虚拟树与变更流</h3>
+              <p class="quiet-copy" data-i18n="hubIndexCopy">把 Hub 内容按 neuDrive 式标准路径展开，供不同 Agent 读取同一份内容索引。</p>
+            </div>
+            <button class="secondary-button" id="reloadHubIndexBtn" type="button" data-i18n="refreshIndex">刷新索引</button>
+          </div>
+          <div class="hub-index-grid">
+            <section class="index-column">
+              <div class="index-column-head">
+                <strong data-i18n="virtualTree">虚拟文件树</strong>
+                <span id="hubTreeMeta">-</span>
+              </div>
+              <div class="hub-tree-list" id="hubTreeList"></div>
+            </section>
+            <section class="index-column">
+              <div class="index-column-head">
+                <strong data-i18n="changeStream">变更流</strong>
+                <span id="hubChangesMeta">-</span>
+              </div>
+              <div class="hub-changes-list" id="hubChangesList"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="aihotView">
+        <section class="aihot-shell">
+          <aside class="aihot-control-panel">
+            <div>
+              <p class="eyebrow">AI HOT</p>
+              <h3 data-i18n="aihotTitle">AI 情报台</h3>
+              <p class="quiet-copy" data-i18n="aihotCopy">把 AI HOT 的精选资讯接入本地工作站，按模型、产品、行业、论文和技巧快速扫读。</p>
+            </div>
+            <div class="aihot-controls">
+              <input id="aihotSearch" type="search" data-i18n-placeholder="aihotSearchPlaceholder" placeholder="搜索 OpenAI / Sora / RAG">
+              <select id="aihotCategory" aria-label="AI HOT category">
+                <option value="" data-i18n="aihotCategoryAll">全部分类</option>
+                <option value="ai-models" data-i18n="aihotCategoryModels">模型发布</option>
+                <option value="ai-products" data-i18n="aihotCategoryProducts">产品更新</option>
+                <option value="industry" data-i18n="aihotCategoryIndustry">行业动态</option>
+                <option value="paper" data-i18n="aihotCategoryPaper">论文研究</option>
+                <option value="tip" data-i18n="aihotCategoryTip">技巧观点</option>
+              </select>
+              <select id="aihotMode" aria-label="AI HOT mode">
+                <option value="selected" data-i18n="aihotModeSelected">精选</option>
+                <option value="all" data-i18n="aihotModeAll">全量</option>
+              </select>
+              <button class="primary-button" id="aihotRefreshBtn" type="button" data-i18n="aihotRefresh">刷新情报</button>
+            </div>
+            <div class="aihot-principles">
+              <article>
+                <strong data-i18n="aihotPrinciple1Title">精选优先</strong>
+                <span data-i18n="aihotPrinciple1Body">默认只读精选池，避免把同一事件和弱相关噪声灌进工作流。</span>
+              </article>
+              <article>
+                <strong data-i18n="aihotPrinciple2Title">按任务扫读</strong>
+                <span data-i18n="aihotPrinciple2Body">需要模型、产品、论文时直接切分类，不从时间线里硬捞。</span>
+              </article>
+              <article>
+                <strong data-i18n="aihotPrinciple3Title">回到源头</strong>
+                <span data-i18n="aihotPrinciple3Body">每条保留原始来源链接，判断前先看源文。</span>
+              </article>
+            </div>
+          </aside>
+
+          <section class="aihot-feed-panel">
+            <div class="block-heading">
+              <div>
+                <p class="eyebrow" data-i18n="aihotFeedEyebrow">Selected Stream</p>
+                <h3 data-i18n="aihotFeedTitle">精选动态</h3>
+              </div>
+              <span id="aihotMeta">-</span>
+            </div>
+            <div class="aihot-list" id="aihotList"></div>
+          </section>
+
+          <aside class="aihot-daily-panel">
+            <div class="block-heading">
+              <div>
+                <p class="eyebrow" data-i18n="aihotDailyEyebrow">Daily</p>
+                <h3 data-i18n="aihotDailyTitle">今日日报</h3>
+              </div>
+            </div>
+            <div class="aihot-brief" id="aihotBrief"></div>
+            <div class="aihot-daily-list" id="aihotDaily"></div>
+          </aside>
+        </section>
+      </section>
+
+      <section class="view" id="projectsView">
+        <section class="surface-block split-block">
+          <div>
+            <p class="eyebrow" data-i18n="projects">项目</p>
+            <h3 data-i18n="projectRegistry">项目注册表</h3>
+            <p class="quiet-copy" data-i18n="projectCopy">第一个接入的应用是你的图像生成工作台。后续项目可以注册进来，不需要移动源码目录。</p>
+          </div>
+          <div class="project-card">
+            <strong>图像生成工作台</strong>
+            <span id="projectState">检查路径中...</span>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" id="appsView">
+        <section class="surface-block app-focus">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow" data-i18n="appDock">应用坞</p>
+              <h3 data-i18n="imageGenerationWorkbench">图像生成工作台</h3>
+            </div>
+            <button class="primary-button" id="launchImageBtnAlt" type="button" data-i18n="launchApp">启动应用</button>
+          </div>
+          <div class="app-preview">
+            <div class="preview-grid"></div>
+            <div class="preview-copy">
+              <strong data-i18n="separateAppTitle">作为独立本地应用运行</strong>
+              <span data-i18n="separateAppBody">工作站只负责启动它的服务并打开现有地址，不会把图片工作站文件复制进本项目。</span>
+            </div>
+          </div>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <script src="workstation.js"></script>
+</body>
+</html>

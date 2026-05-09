@@ -1,0 +1,20 @@
+# Local agent/runtime data
+.claude/
+backup_*/
+
+# Screenshots and generated previews
+*.png
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dependencies if this project later gains a package manifest
+node_modules/
