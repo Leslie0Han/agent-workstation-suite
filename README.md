@@ -38,3 +38,27 @@ http://127.0.0.1:4173
 ## Notes
 
 Runtime data, generated images, backups, packaged builds, screenshots, and local agent folders are intentionally ignored by Git.
+
+## Sync To GitHub
+
+The two live projects remain in their original local folders. Use the sync scripts to copy tracked source files into this suite repository, commit a snapshot, and push it to GitHub.
+
+One snapshot:
+
+```powershell
+.\scripts\sync-suite.ps1
+```
+
+One named version:
+
+```powershell
+.\scripts\sync-suite.ps1 -Tag -Version v2026.05.09-1
+```
+
+Auto-sync while working:
+
+```powershell
+.\scripts\watch-sync.ps1 -IntervalSeconds 60
+```
+
+Every sync creates a Git commit. Tags are for important versions you may want to find later.
