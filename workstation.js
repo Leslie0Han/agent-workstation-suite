@@ -88,6 +88,10 @@
   routerProviderCount: document.getElementById('routerProviderCount'),
   routerLatency: document.getElementById('routerLatency'),
   routerUrl: document.getElementById('routerUrl'),
+  newApiOnlineStatus: document.getElementById('newApiOnlineStatus'),
+  newApiStatusPanel: document.getElementById('newApiStatusPanel'),
+  reloadNewApiBtn: document.getElementById('reloadNewApiBtn'),
+  gatewayChatProvider: document.getElementById('gatewayChatProvider'),
   routerProviderList: document.getElementById('routerProviderList'),
   routerChatModel: document.getElementById('routerChatModel'),
   routerChatInput: document.getElementById('routerChatInput'),
@@ -151,7 +155,7 @@ const translations = {
     sourceSystem: '\u7cfb\u7edf',
     overviewEyebrow: 'Workspace cockpit',
     overviewTitle: '\u5de5\u4f5c\u7ad9\u8fd0\u884c\u603b\u89c8',
-    overviewCopy: '\u628a\u5171\u4eab\u4e0a\u4e0b\u6587\u3001Agent \u540c\u6b65\u3001\u8bb0\u5fc6\u6c89\u6dc0\u3001\u6a21\u578b\u4e2d\u8f6c\u7ad9\u548c\u672c\u5730\u5e94\u7528\u96c6\u4e2d\u770b\u6e05\u695a\u3002',
+    overviewCopy: '\u628a Hub \u4e0a\u4e0b\u6587\u3001Agent \u540c\u6b65\u3001Skill \u5e02\u573a\u3001\u6a21\u578b\u7f51\u5173\u548c\u672c\u5730\u5e94\u7528\u96c6\u4e2d\u770b\u6e05\u695a\u3002',
     overviewOpenApps: '\u6253\u5f00\u5e94\u7528\u4e2d\u5fc3',
     overviewRunSync: '\u8fdb\u5165 Agent \u540c\u6b65',
     overviewSharedAssets: '\u5171\u4eab\u8d44\u4ea7',
@@ -165,7 +169,7 @@ const translations = {
     hubReady: 'Hub \u5df2\u5c31\u7eea',
     syncGap: '\u5f85\u540c\u6b65\u5dee\u5f02',
     appEntries: '\u5e94\u7528\u5165\u53e3',
-    routerSignal: '\u6a21\u578b\u4e2d\u8f6c\u7ad9',
+    routerSignal: '\u6a21\u578b\u7f51\u5173',
     noDashboardFiles: '\u6ca1\u6709\u5339\u914d\u7684 Hub \u6761\u76ee\u3002',
     aihotTitle: 'AI \u60c5\u62a5\u53f0',
     aihotCopy: '\u628a AI HOT \u7684\u7cbe\u9009\u8d44\u8baf\u63a5\u5165\u672c\u5730\u5de5\u4f5c\u7ad9\uff0c\u6309\u6a21\u578b\u3001\u4ea7\u54c1\u3001\u884c\u4e1a\u3001\u8bba\u6587\u548c\u6280\u5de7\u5feb\u901f\u626b\u8bfb\u3002',
@@ -350,11 +354,19 @@ const translations = {
     appMore: '\u66f4\u591a\u5e94\u7528',
     appMoreDesc: '\u5373\u5c06\u4e0a\u7ebf\uff0c\u6562\u8bf7\u671f\u5f85\u3002',
     appComingSoon: '\u5373\u5c06\u4e0a\u7ebf',
-    // 9Router
-    navRouter: '\u6a21\u578b\u4e2d\u8f6c\u7ad9',
-    viewRouter: '\u6a21\u578b\u4e2d\u8f6c\u7ad9',
-    routerTitle: '\u6a21\u578b\u4e2d\u8f6c\u7ad9',
-    routerCopy: '\u628a 9Router \u5185\u7f6e\u5230\u5de5\u4f5c\u7ad9\u91cc\uff0c\u96c6\u4e2d\u8fde\u63a5\u6a21\u578b\u670d\u52a1\u3001\u7ba1\u7406 Key\uff0c\u5e76\u63d0\u4f9b\u5feb\u901f\u5bf9\u8bdd\u5165\u53e3\u3002',
+    // Model Gateway
+    navRouter: '\u6a21\u578b\u7f51\u5173',
+    viewRouter: '\u6a21\u578b\u7f51\u5173',
+    routerTitle: '\u6a21\u578b\u7f51\u5173',
+    routerCopy: '\u7edf\u4e00\u7ba1\u7406 New API\u30019Router \u548c\u672c\u5730 OpenAI \u517c\u5bb9\u5165\u53e3\uff0c\u7ed9\u5feb\u901f\u5bf9\u8bdd\u3001\u56fe\u50cf\u751f\u6210\u548c\u540e\u7eed Agent \u5de5\u5177\u63d0\u4f9b\u6a21\u578b\u6d41\u91cf\u3002',
+    gatewayTabOverview: '\u6982\u89c8',
+    gatewayTabChat: '\u5feb\u901f\u5bf9\u8bdd',
+    gatewayTabNewApi: 'New API',
+    gatewayTabRouter: '9Router',
+    newApiTitle: 'New API \u7f51\u5173',
+    newApiCopy: '\u4f5c\u4e3a\u4e3b\u6a21\u578b\u7f51\u5173\u7ba1\u7406\u6e20\u9053\u3001Token\u3001\u6a21\u578b\u548c\u7528\u91cf\uff1b\u5de5\u4f5c\u7ad9\u4f1a\u68c0\u6d4b\u672c\u5730 3010 \u7aef\u53e3\u5e76\u63d0\u4f9b\u5feb\u901f\u5bf9\u8bdd\u5165\u53e3\u3002',
+    newApiOffline: 'New API \u672a\u8fde\u63a5',
+    newApiReady: 'New API \u5df2\u8fde\u63a5',
     routerRefresh: '\u5237\u65b0',
     routerStatusLabel: '\u72b6\u6001',
     routerProviders: '\u6a21\u578b\u670d\u52a1',
@@ -366,10 +378,10 @@ const translations = {
     routerNoProviders: '\u8fd8\u6ca1\u6709\u8fde\u63a5\u6a21\u578b\u670d\u52a1\u3002\u8bf7\u5728\u5185\u7f6e\u7ba1\u7406\u9762\u677f\u7684\u670d\u52a1\u5546\u91cc\u8fde\u63a5 9Router \u670d\u52a1\u5546\u3002',
     routerChatEyebrow: '\u5feb\u901f\u6d4b\u8bd5',
     routerChatTitle: '\u5feb\u901f\u5bf9\u8bdd',
-    routerChatCopy: '\u901a\u8fc7\u5de5\u4f5c\u7ad9\u5185\u7f6e\u7684 9Router \u53d1\u9001\u4e00\u6b21 LLM \u8bf7\u6c42\uff1b\u672a\u8fde\u63a5\u670d\u52a1\u65f6\u4f1a\u7ed9\u51fa\u914d\u7f6e\u63d0\u793a\u3002',
+    routerChatCopy: '\u4f18\u5148\u901a\u8fc7 New API \u53d1\u9001\uff1bNew API \u4e0d\u5728\u7ebf\u65f6\u56de\u9000\u5230 9Router\u3002',
     routerChatSend: '\u53d1\u9001',
     routerChatSending: '\u53d1\u9001\u4e2d...',
-    routerDashboardTitle: '\u5185\u7f6e\u7ba1\u7406\u9762\u677f',
+    routerDashboardTitle: '9Router \u7ba1\u7406\u9762\u677f',
     routerDashboardCopy: '\u76f4\u63a5\u5728\u5de5\u4f5c\u7ad9\u91cc\u7ba1\u7406 9Router \u6a21\u578b\u670d\u52a1\u5546\u3001\u7ec4\u5408\u7b56\u7565\u548c\u7528\u91cf\u7edf\u8ba1\u3002',
     routerReloadPanel: '\u91cd\u8f7d\u9762\u677f',
   },
@@ -419,7 +431,7 @@ const translations = {
     sourceSystem: 'System',
     overviewEyebrow: 'Workspace cockpit',
     overviewTitle: 'Workstation overview',
-    overviewCopy: 'See shared context, agent sync, memory, AI routing, and local apps in one place.',
+    overviewCopy: 'See Hub context, agent sync, skill market, model gateway, and local apps in one place.',
     overviewOpenApps: 'Open App Center',
     overviewRunSync: 'Open Agent Sync',
     overviewSharedAssets: 'Shared Assets',
@@ -433,7 +445,7 @@ const translations = {
     hubReady: 'Hub Ready',
     syncGap: 'Sync Gaps',
     appEntries: 'App Entries',
-    routerSignal: 'Model Hub',
+    routerSignal: 'Model Gateway',
     noDashboardFiles: 'No matching Hub items.',
     aihotTitle: 'AI Intel Desk',
     aihotCopy: 'Bring AI HOT selected news into the local workstation, grouped by models, products, industry, papers, and tactics.',
@@ -618,11 +630,19 @@ const translations = {
     appMore: 'More Apps',
     appMoreDesc: 'Coming soon, stay tuned.',
     appComingSoon: 'Coming soon',
-    // 9Router
-    navRouter: 'Model Hub',
-    viewRouter: 'Model Hub',
-    routerTitle: 'Model Hub',
-    routerCopy: 'Manage 9Router providers, keys, and quick chat inside the workstation.',
+    // Model Gateway
+    navRouter: 'Model Gateway',
+    viewRouter: 'Model Gateway',
+    routerTitle: 'Model Gateway',
+    routerCopy: 'Manage New API, 9Router, and local OpenAI-compatible endpoints for quick chat, image generation, and agent tools.',
+    gatewayTabOverview: 'Overview',
+    gatewayTabChat: 'Quick Chat',
+    gatewayTabNewApi: 'New API',
+    gatewayTabRouter: '9Router',
+    newApiTitle: 'New API Gateway',
+    newApiCopy: 'Use New API as the primary gateway for channels, tokens, models, and usage. The workstation checks local port 3010.',
+    newApiOffline: 'New API offline',
+    newApiReady: 'New API online',
     routerRefresh: 'Refresh',
     routerStatusLabel: 'Status',
     routerProviders: 'Providers',
@@ -634,10 +654,10 @@ const translations = {
     routerNoProviders: 'No model providers are connected yet. Connect providers in the embedded 9Router panel.',
     routerChatEyebrow: 'Quick Test',
     routerChatTitle: 'Quick Chat',
-    routerChatCopy: 'Send one LLM request through the embedded 9Router service.',
+    routerChatCopy: 'Send through New API first, then fall back to 9Router when New API is offline.',
     routerChatSend: 'Send',
     routerChatSending: 'Sending...',
-    routerDashboardTitle: 'Embedded Admin Panel',
+    routerDashboardTitle: '9Router Admin Panel',
     routerDashboardCopy: 'Manage 9Router providers, combos, and usage directly inside the workstation.',
     routerReloadPanel: 'Reload Panel',
   },
@@ -663,6 +683,8 @@ let aihotItems = null;
 let aihotDaily = null;
 let routerStatus = null;
 let routerProviders = null;
+let newApiStatus = null;
+let newApiModels = null;
 let routerDashboardLoaded = false;
 const floatingAppState = {
   imagegen: { title: '\u56fe\u50cf\u751f\u6210\u5de5\u4f5c\u53f0', icon: 'IMG', dock: null, x: null, y: null },
@@ -753,11 +775,25 @@ els.aihotSearch?.addEventListener('keydown', event => {
 });
 els.aihotCategory?.addEventListener('change', loadAihot);
 els.aihotMode?.addEventListener('change', loadAihot);
-els.refreshRouterBtn?.addEventListener('click', () => { routerStatus = null; routerProviders = null; loadRouterData(); });
+document.querySelectorAll('.gateway-tab').forEach(button => {
+  button.addEventListener('click', () => setGatewayTab(button.dataset.gatewayTab || 'overview'));
+});
+els.refreshRouterBtn?.addEventListener('click', () => {
+  routerStatus = null;
+  routerProviders = null;
+  newApiStatus = null;
+  newApiModels = null;
+  loadGatewayData();
+});
+els.reloadNewApiBtn?.addEventListener('click', () => {
+  newApiStatus = null;
+  newApiModels = null;
+  loadNewApiData();
+});
 els.reloadRouterDashboardBtn?.addEventListener('click', () => {
   routerDashboardLoaded = false;
   if (els.routerDashboardFrame) els.routerDashboardFrame.src = 'about:blank';
-  loadRouterData().then(loadRouterDashboardFrame);
+  loadGatewayData().then(loadRouterDashboardFrame);
 });
 els.minimizeRouter?.addEventListener('click', () => minimizeFloatingApp('router'));
 els.routerChatSendBtn?.addEventListener('click', sendRouterChat);
@@ -805,15 +841,7 @@ function setView(view) {
     showAppCardGrid();
   }
   if (view === 'router') {
-    if (!routerStatus) {
-      loadRouterData().then(() => {
-        loadRouterDashboardFrame();
-        openFloatingApp('router');
-      });
-    } else {
-      loadRouterDashboardFrame();
-      openFloatingApp('router');
-    }
+    if (!routerStatus || !newApiStatus) loadGatewayData();
   }
   if (view === 'skills') {
     loadSkillMarket();
@@ -913,6 +941,13 @@ function renderConnectionMethods() {
       view: 'sync',
     },
     {
+      id: 'skills',
+      name: lang === 'zh' ? 'Skill \u5e02\u573a' : 'Skill Market',
+      description: lang === 'zh' ? `Hub ${state.counts.hubSkills} \u4efd` : `${state.counts.hubSkills} in hub`,
+      status: state.counts.hubSkills > 0 ? 'connected' : 'notConnected',
+      view: 'skills',
+    },
+    {
       id: 'aihot',
       name: lang === 'zh' ? 'AI \u70ed\u70b9' : 'AI Hot',
       description: lang === 'zh' ? '\u6bcf\u65e5\u8d44\u8baf\u4e0e\u7cbe\u9009\u6761\u76ee' : 'Daily brief and selected items',
@@ -921,9 +956,9 @@ function renderConnectionMethods() {
     },
     {
       id: 'router',
-      name: lang === 'zh' ? '\u6a21\u578b\u4e2d\u8f6c\u7ad9' : 'Model Hub',
-      description: lang === 'zh' ? '9Router \u6a21\u578b\u670d\u52a1\u4e0e\u5feb\u901f\u5bf9\u8bdd' : '9Router providers and quick chat',
-      status: routerStatus?.online ? 'connected' : 'detected',
+      name: lang === 'zh' ? '\u6a21\u578b\u7f51\u5173' : 'Model Gateway',
+      description: lang === 'zh' ? 'New API / 9Router / \u5feb\u901f\u5bf9\u8bdd' : 'New API / 9Router / quick chat',
+      status: (newApiStatus?.online || routerStatus?.online) ? 'connected' : 'detected',
       view: 'router',
     },
     {
@@ -932,13 +967,6 @@ function renderConnectionMethods() {
       description: lang === 'zh' ? '\u56fe\u50cf\u5de5\u4f5c\u53f0 / PPT \u5de5\u5177' : 'Image workbench / PPT tool',
       status: 'localReady',
       view: 'appCenter',
-    },
-    {
-      id: 'skills',
-      name: 'Skills',
-      description: lang === 'zh' ? `Hub ${state.counts.hubSkills} \u4efd` : `${state.counts.hubSkills} in hub`,
-      status: state.counts.hubSkills > 0 ? 'connected' : 'notConnected',
-      view: 'skills',
     },
   ];
   els.connectionMethodGrid.innerHTML = '';
@@ -1089,7 +1117,7 @@ function renderDashboardSummary() {
     [t('hubReady'), state.paths.hubRoot ? 'OK' : '-'],
     [t('syncGap'), pendingSyncCount()],
     [t('appEntries'), 2],
-    [t('routerSignal'), routerStatus?.online ? t('connected') : t('detected')],
+    [t('routerSignal'), (newApiStatus?.online || routerStatus?.online) ? t('connected') : t('detected')],
     [t('storage'), formatBytes(estimatedStorageBytes())],
   ];
   els.dashboardSummaryList.innerHTML = '';
@@ -1935,7 +1963,22 @@ function textNode(tag, text) {
   return node;
 }
 
-// 鈹€鈹€ 9Router Functions 鈹€鈹€
+// Model Gateway
+
+function setGatewayTab(tab) {
+  document.querySelectorAll('.gateway-tab').forEach(button => {
+    button.classList.toggle('active', button.dataset.gatewayTab === tab);
+  });
+  document.querySelectorAll('.gateway-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.dataset.gatewayPanel === tab || (tab === 'overview' && panel.dataset.gatewayPanel === 'overview'));
+  });
+  if (tab === 'router') loadRouterDashboardFrame();
+  if (tab === 'newapi') loadNewApiData();
+}
+
+async function loadGatewayData() {
+  await Promise.all([loadRouterData(), loadNewApiData()]);
+}
 
 async function loadRouterData() {
   setStatus('scanning');
@@ -1955,6 +1998,22 @@ async function loadRouterData() {
   }
 }
 
+async function loadNewApiData() {
+  try {
+    const [statusRes, modelsRes] = await Promise.all([
+      fetch('/api/new-api/status'),
+      fetch('/api/new-api/models'),
+    ]);
+    newApiStatus = await statusRes.json();
+    newApiModels = await modelsRes.json();
+    renderNewApiStatus();
+  } catch (error) {
+    newApiStatus = { ok: false, online: false, error: error.message };
+    newApiModels = { models: [] };
+    renderNewApiStatus();
+  }
+}
+
 function renderRouterStatus() {
   if (!routerStatus) return;
   const online = routerStatus.online;
@@ -1966,9 +2025,40 @@ function renderRouterStatus() {
   if (els.routerLatency) els.routerLatency.textContent = routerStatus.latency != null ? `${routerStatus.latency}ms` : '-';
   if (els.routerUrl) els.routerUrl.textContent = routerStatus.url || '-';
   if (els.routerStatusIndicator) {
-    els.routerStatusIndicator.textContent = online ? t('routerOnline') : t('routerOffline');
-    els.routerStatusIndicator.dataset.status = online ? 'online' : 'offline';
+    const newApiOnline = !!newApiStatus?.online;
+    els.routerStatusIndicator.textContent = newApiOnline ? t('newApiReady') : (online ? '9Router ' + t('routerOnline') : t('routerOffline'));
+    els.routerStatusIndicator.dataset.status = (newApiOnline || online) ? 'online' : 'offline';
   }
+}
+
+function renderNewApiStatus() {
+  const online = !!newApiStatus?.online;
+  renderRouterStatus();
+  if (els.newApiOnlineStatus) {
+    els.newApiOnlineStatus.textContent = online ? t('routerOnline') : t('routerOffline');
+    els.newApiOnlineStatus.style.color = online ? '#7bc77b' : 'var(--warn)';
+  }
+  if (!els.newApiStatusPanel) return;
+  els.newApiStatusPanel.innerHTML = '';
+  const card = document.createElement('article');
+  card.className = `router-provider-card${online ? ' enabled' : ''}`;
+  const head = document.createElement('div');
+  head.className = 'router-provider-head';
+  head.append(
+    textNode('strong', online ? t('newApiReady') : t('newApiOffline')),
+    textNode('span', newApiStatus?.url || 'http://127.0.0.1:3010'),
+  );
+  const meta = document.createElement('div');
+  meta.className = 'router-provider-meta';
+  if (online) {
+    const models = newApiModels?.models || [];
+    meta.append(textNode('span', `${models.length} models`));
+    models.slice(0, 8).forEach(model => meta.append(textNode('code', model.id || model.name || String(model))));
+  } else {
+    meta.append(textNode('span', newApiStatus?.error || 'Docker/New API sidecar is not running yet.'));
+  }
+  card.append(head, meta);
+  els.newApiStatusPanel.appendChild(card);
 }
 
 function renderRouterProviders() {
@@ -2021,7 +2111,9 @@ async function sendRouterChat() {
   els.routerChatOutput.textContent = t('routerChatSending');
   els.routerChatOutput.className = 'router-chat-output loading';
   try {
-    const response = await fetch('/api/router/chat', {
+    const provider = els.gatewayChatProvider?.value || 'auto';
+    const endpoint = provider === 'router' ? '/api/router/chat' : provider === 'newapi' ? '/api/new-api/chat' : '/api/gateway/chat';
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model, messages: [{ role: 'user', content: message }] }),

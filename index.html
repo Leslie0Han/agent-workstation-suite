@@ -37,9 +37,9 @@
       <nav class="rail-nav" aria-label="Workspace sections">
         <button class="nav-item active" data-view="overview" type="button" data-i18n="navOverview">鎬昏</button>
         <button class="nav-item" data-view="sync" type="button" data-i18n="navSync">Agent 鍚屾</button>
-        <button class="nav-item" data-view="aihot" type="button" data-i18n="navAihot">AI 鐑偣</button>
         <button class="nav-item" data-view="skills" type="button" data-i18n="navSkills">Skill 甯傚満</button>
-        <button class="nav-item" data-view="router" type="button" data-i18n="navRouter">妯″瀷涓浆绔</button>
+        <button class="nav-item" data-view="router" type="button" data-i18n="navRouter">模型网关</button>
+        <button class="nav-item" data-view="aihot" type="button" data-i18n="navAihot">AI 鐑偣</button>
         <button class="nav-item" data-view="appCenter" type="button" data-i18n="navAppCenter">搴旂敤涓績</button>
       </nav>
 
@@ -534,9 +534,9 @@
         <section class="surface-block">
           <div class="block-heading">
             <div>
-              <p class="eyebrow">9Router</p>
-              <h3 data-i18n="routerTitle">妯″瀷涓浆绔</h3>
-              <p class="quiet-copy" data-i18n="routerCopy">鎶?9Router 鍐呯疆鍒板伐浣滅珯閲岋紝闆嗕腑杩炴帴妯″瀷鏈嶅姟銆佺鐞?Key锛屽苟缁欏揩閫熷璇濇彁渚涙湰鍦板叆鍙ｃ€</p>
+              <p class="eyebrow">MODEL GATEWAY</p>
+              <h3 data-i18n="routerTitle">模型网关</h3>
+              <p class="quiet-copy" data-i18n="routerCopy">统一管理 New API、9Router 和本地 OpenAI 兼容入口，给快速对话、图像生成和后续 Agent 工具提供模型流量。</p>
             </div>
             <div class="router-header-actions">
               <span class="router-status-indicator" id="routerStatusIndicator">妫€鏌ヤ腑...</span>
@@ -544,7 +544,14 @@
             </div>
           </div>
 
-          <div class="router-status-grid" id="routerStatusGrid">
+          <div class="gateway-tabs" role="tablist" aria-label="Model gateway tabs">
+            <button class="gateway-tab active" data-gateway-tab="overview" type="button" data-i18n="gatewayTabOverview">概览</button>
+            <button class="gateway-tab" data-gateway-tab="chat" type="button" data-i18n="gatewayTabChat">快速对话</button>
+            <button class="gateway-tab" data-gateway-tab="newapi" type="button" data-i18n="gatewayTabNewApi">New API</button>
+            <button class="gateway-tab" data-gateway-tab="router" type="button" data-i18n="gatewayTabRouter">9Router</button>
+          </div>
+
+          <div class="router-status-grid gateway-panel active" id="routerStatusGrid" data-gateway-panel="overview">
             <article class="router-stat-card">
               <span data-i18n="routerStatusLabel">鐘舵€</span>
               <strong id="routerOnlineStatus">-</strong>
@@ -561,10 +568,14 @@
               <span>鏈湴鍦板潃</span>
               <strong id="routerUrl" style="font-size:13px">-</strong>
             </article>
+            <article class="router-stat-card">
+              <span>New API</span>
+              <strong id="newApiOnlineStatus">-</strong>
+            </article>
           </div>
         </section>
 
-        <section class="surface-block" style="margin-top:12px">
+        <section class="surface-block gateway-panel active" data-gateway-panel="overview" style="margin-top:12px">
           <div class="block-heading">
             <div>
               <p class="eyebrow" data-i18n="routerProviderListEyebrow">模型服务</p>
@@ -574,16 +585,21 @@
           <div class="router-provider-list" id="routerProviderList"></div>
         </section>
 
-        <section class="surface-block" style="margin-top:12px">
+        <section class="surface-block gateway-panel" data-gateway-panel="chat" style="margin-top:12px">
           <div class="block-heading">
             <div>
               <p class="eyebrow" data-i18n="routerChatEyebrow">快速测试</p>
               <h3 data-i18n="routerChatTitle">快速对话</h3>
-              <p class="quiet-copy" data-i18n="routerChatCopy">通过工作站内置的 9Router 发送一次 LLM 请求；未连接服务时会给出配置提示。</p>
+              <p class="quiet-copy" data-i18n="routerChatCopy">优先通过 New API 发送；New API 不在线时回退到 9Router。</p>
             </div>
           </div>
           <div class="router-chat-panel">
             <div class="router-chat-model-row">
+              <select id="gatewayChatProvider" aria-label="Gateway provider">
+                <option value="auto">自动</option>
+                <option value="newapi">New API</option>
+                <option value="router">9Router</option>
+              </select>
               <input id="routerChatModel" type="text" value="auto" placeholder="模型名，例如 auto 自动选择，或 kr/claude-sonnet-4.5">
               <button class="primary-button" id="routerChatSendBtn" type="button" data-i18n="routerChatSend">发送</button>
             </div>
@@ -592,11 +608,26 @@
           </div>
         </section>
 
-        <section class="surface-block router-dashboard-window" id="routerDashboardWindow" style="margin-top:12px">
+        <section class="surface-block gateway-panel" data-gateway-panel="newapi" style="margin-top:12px">
           <div class="block-heading">
             <div>
-              <p class="eyebrow">管理面板</p>
-              <h3 data-i18n="routerDashboardTitle">内置管理面板</h3>
+              <p class="eyebrow">NEW API</p>
+              <h3 data-i18n="newApiTitle">New API 网关</h3>
+              <p class="quiet-copy" data-i18n="newApiCopy">作为主模型网关管理渠道、Token、模型和用量；工作站会检测本地 3010 端口并提供快速对话入口。</p>
+            </div>
+            <div class="app-window-actions">
+              <button class="secondary-button" id="reloadNewApiBtn" type="button" data-i18n="routerRefresh">刷新</button>
+              <a class="secondary-button" href="http://127.0.0.1:3010" target="_blank" rel="noreferrer">打开面板</a>
+            </div>
+          </div>
+          <div class="router-provider-list" id="newApiStatusPanel"></div>
+        </section>
+
+        <section class="surface-block router-dashboard-window gateway-panel" id="routerDashboardWindow" data-gateway-panel="router" style="margin-top:12px">
+          <div class="block-heading">
+            <div>
+              <p class="eyebrow">9ROUTER</p>
+              <h3 data-i18n="routerDashboardTitle">9Router 管理面板</h3>
               <p class="quiet-copy" data-i18n="routerDashboardCopy">直接在工作站里管理 9Router 模型服务商、组合策略和用量统计。</p>
             </div>
             <div class="app-window-actions">

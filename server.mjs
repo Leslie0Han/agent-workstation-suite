@@ -5,6 +5,7 @@ import { extname, join, normalize, resolve, relative } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { getRouterStatus, getRouterProviders, getRouterQuota, getRouterCombos, prepareRouterEmbedding, routerChat } from './router-adapter.mjs';
+import { getNewApiStatus, getNewApiModels, newApiChat } from './new-api-adapter.mjs';
 
 const root = process.cwd();
 const hubRoot = process.env.AGENT_WORKSTATION_HOME || join(homedir(), '.agent-workstation');
@@ -227,6 +228,30 @@ createServer(async (req, res) => {
     if (req.method === 'POST' && url.pathname === '/api/router/chat') {
       const body = await readJson(req);
       await sendJson(res, await routerChat(body.model, body.messages));
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/new-api/status') {
+      await sendJson(res, await getNewApiStatus());
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/new-api/models') {
+      await sendJson(res, await getNewApiModels());
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/new-api/chat') {
+      const body = await readJson(req);
+      await sendJson(res, await newApiChat(body.model, body.messages));
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/gateway/chat') {
+      const body = await readJson(req);
+      const first = await newApiChat(body.model, body.messages);
+      if (first?.ok) {
+        await sendJson(res, first);
+        return;
+      }
+      const fallback = await routerChat(body.model, body.messages);
+      await sendJson(res, fallback?.ok ? fallback : { ...fallback, gatewayFallbackReason: first.error || first.message });
       return;
     }
     const requested = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);

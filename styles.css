@@ -2037,6 +2037,42 @@ h3 { font-size: 19px; line-height: 1.15; }
   align-items: center;
 }
 
+.gateway-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.gateway-tab {
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .04);
+  color: var(--muted);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gateway-tab.active {
+  border-color: rgba(255, 140, 66, .45);
+  background: rgba(255, 140, 66, .12);
+  color: var(--ink);
+}
+
+.gateway-panel {
+  display: none;
+}
+
+.gateway-panel.active {
+  display: block;
+}
+
+.router-status-grid.gateway-panel.active {
+  display: grid;
+}
+
 .router-status-indicator {
   display: inline-flex;
   align-items: center;
