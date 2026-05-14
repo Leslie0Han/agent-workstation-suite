@@ -4,12 +4,53 @@ import { spawn } from 'node:child_process';
 import { extname, join, normalize, resolve, relative } from 'node:path';
 import { homedir } from 'node:os';
 import { createHash } from 'node:crypto';
+import { getRouterStatus, getRouterProviders, getRouterQuota, getRouterCombos, prepareRouterEmbedding, routerChat } from './router-adapter.mjs';
 
 const root = process.cwd();
 const hubRoot = process.env.AGENT_WORKSTATION_HOME || join(homedir(), '.agent-workstation');
 const changeLogPath = join(hubRoot, 'changes.jsonl');
 const port = Number(process.env.PORT || 4789);
 const imageWorkbenchDir = process.env.IMAGE_WORKBENCH_DIR || 'D:\\leslie\\60_claude项目库\\图像生成工作台';
+const pptToolDir = process.env.PPT_TOOL_DIR || 'D:\\leslie\\60_claude项目库\\PPT工具';
+
+// ── 9Router auto-start ──
+const ROUTER_PORT = process.env.NINE_ROUTER_PORT || '20128';
+let routerChild = null;
+
+function startRouter() {
+  const cliPath = join(root, 'node_modules', '9router', 'cli.js');
+  try {
+    routerChild = spawn('node', [cliPath, '--port', ROUTER_PORT, '--tray', '--no-browser', '--skip-update'], {
+      cwd: root,
+      detached: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, PORT: ROUTER_PORT },
+      windowsHide: true,
+    });
+    routerChild.stdout?.on('data', d => {
+      const msg = d.toString().trim();
+      if (msg) console.log(`[9Router] ${msg}`);
+    });
+    routerChild.stderr?.on('data', d => {
+      const msg = d.toString().trim();
+      if (msg) console.error(`[9Router] ${msg}`);
+    });
+    routerChild.on('exit', code => {
+      console.log(`[9Router] exited with code ${code}`);
+      routerChild = null;
+    });
+    console.log(`[9Router] Starting on port ${ROUTER_PORT}...`);
+  } catch (err) {
+    console.error(`[9Router] Failed to start: ${err.message}`);
+  }
+}
+// Graceful shutdown
+function cleanup() {
+  if (routerChild) { try { process.kill(-routerChild.pid); } catch {} }
+  process.exit(0);
+}
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 
 const skillDescriptionsZh = new Map(Object.entries({
   'algorithmic-art': '用 p5.js、随机种子和可调参数创作生成艺术、算法视觉、粒子系统与流场图形。',
@@ -93,6 +134,15 @@ createServer(async (req, res) => {
       await sendJson(res, await exportSkills(body.items || []));
       return;
     }
+    if (req.method === 'POST' && url.pathname === '/api/install-market-skill') {
+      const body = await readJson(req);
+      await sendJson(res, await installMarketSkill(body));
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/skill-market') {
+      await sendJson(res, await getSkillMarket(url.searchParams.get('rank') || 'allTime'));
+      return;
+    }
     if (req.method === 'GET' && url.pathname === '/api/hub-documents') {
       await sendJson(res, await getHubDocuments());
       return;
@@ -151,7 +201,34 @@ createServer(async (req, res) => {
       await sendJson(res, { ok: true, url: 'http://127.0.0.1:4173' });
       return;
     }
+    if (req.method === 'POST' && url.pathname === '/api/launch-ppt-web-tool') {
+      await launchPptWebTool();
+      await sendJson(res, { ok: true, url: 'http://127.0.0.1:4185' });
+      return;
+    }
 
+    // ── 9Router API ──
+    if (req.method === 'GET' && url.pathname === '/api/router/status') {
+      await sendJson(res, await getRouterStatus());
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/router/providers') {
+      await sendJson(res, await getRouterProviders());
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/router/quota') {
+      await sendJson(res, await getRouterQuota());
+      return;
+    }
+    if (req.method === 'GET' && url.pathname === '/api/router/combos') {
+      await sendJson(res, await getRouterCombos());
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/router/chat') {
+      const body = await readJson(req);
+      await sendJson(res, await routerChat(body.model, body.messages));
+      return;
+    }
     const requested = url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname);
     const filePath = resolve(root, `.${requested}`);
     if (!isInside(root, filePath)) {
@@ -171,10 +248,15 @@ createServer(async (req, res) => {
   }
 }).listen(port, () => {
   console.log(`Agent Workstation: http://127.0.0.1:${port}`);
+  // Auto-start integrated services
+  startRouter();
+  setTimeout(() => {
+    prepareRouterEmbedding().catch(error => console.error(`[9Router] embed prepare failed: ${error.message}`));
+  }, 2500);
 });
 
 async function ensureHub() {
-  const dirs = ['profile', 'skills', 'memory', 'projects', 'secrets', 'messages', 'artifacts', 'adapters'];
+  const dirs = ['profile', 'skills', 'memory', 'projects', 'secrets', 'messages', 'artifacts', 'adapters', 'router'];
   await mkdir(hubRoot, { recursive: true });
   await Promise.all(dirs.map(dir => mkdir(join(hubRoot, dir), { recursive: true })));
   await mkdir(join(hubRoot, 'projects', 'image-workbench'), { recursive: true });
@@ -417,6 +499,157 @@ async function exportSkills(items) {
   return { ok: results.every(item => item.ok), results };
 }
 
+async function installMarketSkill(skill) {
+  const name = String(skill?.name || skill?.folder || '').trim();
+  const folder = sanitizeSkillFolder(skill?.folder || name);
+  if (!name || !folder) throw new Error('Missing skill name');
+  const targetDir = join(hubRoot, 'skills', folder);
+  const skillPath = join(targetDir, 'SKILL.md');
+  if (!isInside(join(hubRoot, 'skills'), targetDir)) throw new Error('Target path escaped hub skills directory');
+  await mkdir(targetDir, { recursive: true });
+  let content = '';
+  if (skill.rawUrl) {
+    try {
+      const response = await fetch(skill.rawUrl);
+      if (response.ok) content = await response.text();
+    } catch {}
+  }
+  if (!content.trim()) {
+    content = [
+      `# ${name}`,
+      '',
+      String(skill.description || 'Reusable Agent skill.'),
+      '',
+      '## Source',
+      '',
+      `- Registry: ${skill.repo || 'Skill Market'}`,
+      `- Category: ${skill.category || 'General'}`,
+      '',
+      '## Usage',
+      '',
+      'Use this skill when the user request matches the description above.',
+      '',
+    ].join('\n');
+  }
+  await writeFile(skillPath, content, 'utf8');
+  await recordHubChange({
+    action: 'skill_market_installed',
+    path: `/skills/${folder}/SKILL.md`,
+    source: 'skill-market',
+    metadata: { name, repo: skill.repo || null, category: skill.category || null },
+  });
+  return { ok: true, name, folder, path: skillPath };
+}
+
+function sanitizeSkillFolder(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+async function getSkillMarket(rank) {
+  const key = ['trending', 'hot'].includes(rank) ? rank : 'allTime';
+  const path = key === 'allTime' ? '' : key;
+  const url = `https://www.skills.sh/${path}`;
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Agent Workstation Skill Market',
+      'Accept': 'text/html',
+    },
+  });
+  if (!response.ok) throw new Error(`Skill market fetch failed: ${response.status}`);
+  const html = await response.text();
+  const items = parseSkillsSh(html).map(item => ({
+    ...item,
+    category: inferSkillCategory(item.name, item.repo),
+    descriptionZh: describeMarketSkillZh(item.name, item.repo),
+    icon: skillInitialsServer(item.name),
+  }));
+  return {
+    ok: true,
+    rank: key,
+    source: url,
+    generatedAt: new Date().toISOString(),
+    total: items.length,
+    items,
+  };
+}
+
+function parseSkillsSh(html) {
+  const items = [];
+  const re = /href="\/([^"\/]+)\/([^"\/]+)\/([^"\/]+)"[\s\S]*?<span[^>]*>(\d+)<\/span>[\s\S]*?<h3[^>]*>([^<]+)<\/h3>[\s\S]*?<p[^>]*>([^<]+)<\/p>[\s\S]*?<span class="font-mono text-sm text-foreground">([^<]+)<\/span>/g;
+  let match;
+  while ((match = re.exec(html))) {
+    const repo = decodeHtml(match[6]);
+    const name = decodeHtml(match[5]);
+    items.push({
+      rank: Number(match[4]),
+      name,
+      folder: sanitizeSkillFolder(name),
+      repo,
+      displayInstalls: decodeHtml(match[7]),
+      installScore: parseMetric(match[7]),
+      href: `https://www.skills.sh/${match[1]}/${match[2]}/${match[3]}`,
+    });
+  }
+  return items;
+}
+
+function parseMetric(value) {
+  const raw = String(value || '').split(/\s|\+/)[0].trim().toUpperCase();
+  const number = Number(raw.replace(/[KM]/g, ''));
+  if (!Number.isFinite(number)) return 0;
+  if (raw.includes('M')) return Math.round(number * 1_000_000);
+  if (raw.includes('K')) return Math.round(number * 1_000);
+  return number;
+}
+
+function inferSkillCategory(name, repo) {
+  const value = `${name} ${repo}`.toLowerCase();
+  if (/lark|feishu/.test(value)) return '飞书';
+  if (/azure|microsoft/.test(value)) return 'Azure';
+  if (/react|frontend|design|interface|web-design/.test(value)) return '前端设计';
+  if (/video|remotion|kling/.test(value)) return '视频';
+  if (/image|photo/.test(value)) return '图像';
+  if (/browser/.test(value)) return '浏览器';
+  if (/cli/.test(value)) return 'CLI';
+  if (/agent|copilot/.test(value)) return 'Agent';
+  return '通用';
+}
+
+function describeMarketSkillZh(name, repo) {
+  const category = inferSkillCategory(name, repo);
+  const readable = String(name || '').replace(/-/g, ' ');
+  const patterns = {
+    '飞书': `用于飞书相关工作流的 Skill，覆盖 ${readable} 场景。`,
+    Azure: `用于 Azure / Microsoft 生态的 Skill，帮助处理 ${readable} 相关任务。`,
+    '前端设计': `用于前端设计、界面打磨和实现规范的 Skill。`,
+    '视频': `用于视频生成、剪辑或合成工作流的 Skill。`,
+    '图像': `用于图像生成、编辑或视觉素材处理的 Skill。`,
+    '浏览器': `用于浏览器自动化、网页检查和交互测试的 Skill。`,
+    CLI: `用于命令行工具和本地自动化流程的 Skill。`,
+    Agent: `用于 Agent 工作流、助手编排或 Copilot 场景的 Skill。`,
+    '通用': `来自 ${repo} 的 Skill，用于扩展 Agent 的 ${readable} 能力。`,
+  };
+  return patterns[category] || patterns['通用'];
+}
+
+function skillInitialsServer(value) {
+  return String(value || 'SK').split(/[\s-_]+/).filter(Boolean).slice(0, 2).map(part => part[0]?.toUpperCase()).join('') || 'SK';
+}
+
+function decodeHtml(value) {
+  return String(value || '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'");
+}
+
 async function getAgentAdapters() {
   const [contextPreview, hubSkills, claudeSkills, codexSkills, changes] = await Promise.all([
     getContextExportPreview(),
@@ -533,6 +766,15 @@ const hubDocuments = [
     descriptionZh: '追加式记录，用来放临时想法、交接信息和待整理内容。',
     path: join(hubRoot, 'messages', 'inbox.jsonl'),
     editable: false,
+  },
+  {
+    key: 'routerConfig',
+    title: 'Router Config',
+    titleZh: '模型中转站配置',
+    description: 'Preferred AI provider configuration and combo setups for 9Router.',
+    descriptionZh: '9Router 偏好的 AI Provider 配置和 Combo 组合记录。',
+    path: join(hubRoot, 'router', 'config.md'),
+    editable: true,
   },
 ];
 
@@ -1363,6 +1605,20 @@ async function launchImageWorkbench() {
     detached: true,
     stdio: 'ignore',
     env: { ...process.env, PORT: process.env.IMAGE_WORKBENCH_PORT || '4173' },
+    windowsHide: true,
+  });
+  child.unref();
+}
+
+async function launchPptWebTool() {
+  const appPath = join(pptToolDir, 'web_app.py');
+  await stat(appPath);
+  const pythonBin = process.env.PPT_WEB_PYTHON || 'C:\\Users\\hanxuan\\AppData\\Local\\Programs\\Python\\Python311\\python.exe';
+  const child = spawn(pythonBin, ['web_app.py'], {
+    cwd: pptToolDir,
+    detached: true,
+    stdio: 'ignore',
+    env: { ...process.env, PPT_WEB_PORT: process.env.PPT_WEB_PORT || '4185' },
     windowsHide: true,
   });
   child.unref();
